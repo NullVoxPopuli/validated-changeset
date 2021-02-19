@@ -39,7 +39,7 @@ import {
   ValidatorAction,
   ValidatorMap
 } from './types';
-import { isArrayObject } from './utils/array-object';
+import { isArrayObject, arrayToObject } from './utils/array-object';
 
 export {
   CHANGESET,
@@ -1062,7 +1062,9 @@ export function Changeset(
   validationMap?: ValidatorMap | null | undefined,
   options?: Config
 ): BufferedChangeset {
-  const c: BufferedChangeset = changeset(obj, validateFn, validationMap, options);
+  const convertedObj = unArray(obj);
+
+  const c: BufferedChangeset = changeset(convertedObj, validateFn, validationMap, options);
 
   return new Proxy(c, {
     get(targetBuffer, key /*, receiver*/) {
@@ -1075,4 +1077,18 @@ export function Changeset(
       return true;
     }
   });
+}
+
+function unArray(obj: any) {
+  if (!isObject(obj)) {
+    return obj;
+  }
+
+  for (let key in obj) {
+    if (Array.isArray(obj[key] as unknown)) {
+      obj[key] = arrayToObject(obj[key] as unknown[]);
+    }
+  }
+
+  return obj;
 }

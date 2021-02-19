@@ -2,6 +2,7 @@ import { Changeset } from '../src';
 import get from '../src/utils/get-deep';
 import set from '../src/utils/set-deep';
 import lookupValidator from '../src/utils/validator-lookup';
+import { arrayToObject } from '../src/utils/array-object';
 
 let dummyModel: any;
 const exampleArray: Array<any> = [];
@@ -654,7 +655,8 @@ describe('Unit | Utility | changeset', () => {
     }
   });
 
-  it('#get proxies to underlying array properties', () => {
+  // no longer an array
+  xit('#get proxies to underlying array properties', () => {
     dummyModel.users = ['user1', 'user2'];
     const dummyChangeset = Changeset(dummyModel);
 
@@ -937,7 +939,9 @@ describe('Unit | Utility | changeset', () => {
       changeset.set('emails.0.primary', 'fun@email.com');
 
       expect(changeset.get('emails.0.primary')).toEqual('fun@email.com');
-      expect(changeset.get('emails').unwrap()).toEqual([{ primary: 'fun@email.com' }]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([{ primary: 'fun@email.com' }])
+      );
       expect(changeset.changes).toEqual([{ key: 'emails.0.primary', value: 'fun@email.com' }]);
     });
 
@@ -948,9 +952,10 @@ describe('Unit | Utility | changeset', () => {
 
       expect(changeset.get('emails.0.funEmail')).toEqual('fun@email.com');
       expect(changeset.changes).toEqual([{ key: 'emails.0.funEmail', value: 'fun@email.com' }]);
-      expect(changeset.get('emails').unwrap()).toEqual([
-        { primary: 'bob@email.com', funEmail: 'fun@email.com' }
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        // Error: primary is missing, incorrect merge?
+        arrayToObject([{ primary: 'bob@email.com', funEmail: 'fun@email.com' }])
+      );
     });
 
     it('can add new properties to new entries', () => {
@@ -961,10 +966,12 @@ describe('Unit | Utility | changeset', () => {
 
       expect(changeset.get('emails.1.funEmail')).toEqual('fun@email.com');
       expect(changeset.get('emails.1.primary')).toEqual('primary@email.com');
-      expect(changeset.get('emails').unwrap()).toEqual([
-        { primary: 'bob@email.com' },
-        { primary: 'primary@email.com', funEmail: 'fun@email.com' }
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          { primary: 'bob@email.com' },
+          { primary: 'primary@email.com', funEmail: 'fun@email.com' }
+        ])
+      );
       expect(changeset.changes).toEqual([
         { key: 'emails.1.funEmail', value: 'fun@email.com' },
         { key: 'emails.1.primary', value: 'primary@email.com' }
@@ -981,10 +988,12 @@ describe('Unit | Utility | changeset', () => {
 
       expect(changeset.get('emails.1.funEmail')).toEqual('fun@email.com');
       expect(changeset.get('emails.1.primary')).toEqual('primary@email.com');
-      expect(changeset.get('emails').unwrap()).toEqual([
-        { primary: 'bob@email.com' },
-        { primary: 'primary@email.com', funEmail: 'fun@email.com' }
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          { primary: 'bob@email.com' },
+          { primary: 'primary@email.com', funEmail: 'fun@email.com' }
+        ])
+      );
       expect(changeset.changes).toEqual([
         {
           key: 'emails.1',
@@ -1004,10 +1013,12 @@ describe('Unit | Utility | changeset', () => {
           }
         }
       ]);
-      expect(changeset.get('emails').unwrap()).toEqual([
-        { primary: 'bob@email.com' },
-        { primary: 'primary2@email.com', funEmail: 'fun@email.com' }
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          { primary: 'bob@email.com' },
+          { primary: 'primary2@email.com', funEmail: 'fun@email.com' }
+        ])
+      );
     });
 
     it('can edit a new object that was added after deleting an array entry', () => {
@@ -1026,13 +1037,15 @@ describe('Unit | Utility | changeset', () => {
 
       changeset.set('emails.1', null);
 
-      expect(changeset.get('emails').unwrap()).toEqual([
-        {
-          fun: 'fun0@email.com',
-          primary: 'primary0@email.com'
-        },
-        null
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          {
+            fun: 'fun0@email.com',
+            primary: 'primary0@email.com'
+          },
+          null
+        ])
+      );
       expect(changeset.changes).toEqual([
         {
           key: 'emails.1',
@@ -1045,16 +1058,18 @@ describe('Unit | Utility | changeset', () => {
         primary: 'brandNewPrimary@email.com'
       });
 
-      expect(changeset.get('emails').unwrap()).toEqual([
-        {
-          fun: 'fun0@email.com',
-          primary: 'primary0@email.com'
-        },
-        {
-          fun: 'brandNew@email.com',
-          primary: 'brandNewPrimary@email.com'
-        }
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          {
+            fun: 'fun0@email.com',
+            primary: 'primary0@email.com'
+          },
+          {
+            fun: 'brandNew@email.com',
+            primary: 'brandNewPrimary@email.com'
+          }
+        ])
+      );
       expect(changeset.changes).toEqual([
         {
           key: 'emails.1',
@@ -1084,14 +1099,16 @@ describe('Unit | Utility | changeset', () => {
 
       changeset.set('emails.1', null);
 
-      expect(changeset.get('emails').unwrap()).toEqual([
-        {
-          fun: 'fun0@email.com',
-          primary: 'primary0@email.com',
-          value: 'the value'
-        },
-        null
-      ]);
+      expect(changeset.get('emails').unwrap()).toEqual(
+        arrayToObject([
+          {
+            fun: 'fun0@email.com',
+            primary: 'primary0@email.com',
+            value: 'the value'
+          },
+          null
+        ])
+      );
       expect(changeset.changes).toEqual([
         {
           key: 'emails.1',
